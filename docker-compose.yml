@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tj_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tradingjournal
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: tradingjournal
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tradingjournal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: tj_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://tradingjournal:changeme@postgres:5432/tradingjournal
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-do-not-use-in-production-32chars}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 10080
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      UPLOAD_DIR: /app/uploads
+      MAX_UPLOAD_SIZE_MB: 5
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/app/uploads
+
+volumes:
+  postgres_data:
+  uploads_data:
