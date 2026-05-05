@@ -114,13 +114,15 @@ class _OverviewTab extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.symmetric(horizontal: pad, vertical: 20),
         children: [
-          GridView.count(
-            crossAxisCount: cols,
-            crossAxisSpacing: 14,
-            mainAxisSpacing: 14,
+          GridView(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: cols == 2 ? 1.4 : 1.5,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: cols,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              mainAxisExtent: responsive<double>(context, mobile: 138, tablet: 130, desktop: 130),
+            ),
             children: [
               StatCard(
                 label: 'TOTAL P&L',
