@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "./uploads"
     MAX_UPLOAD_SIZE_MB: int = 5
 
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8080"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8080,https://bitgeeks-journal-backend.appwrite.network"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
