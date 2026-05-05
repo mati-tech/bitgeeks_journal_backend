@@ -24,7 +24,12 @@
       "Bash(git commit -m ' *)",
       "Bash(flutter --version)",
       "Bash(flutter create *)",
-      "Bash(flutter pub *)"
+      "Bash(flutter pub *)",
+      "Bash(flutter analyze *)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code} in %{time_total}s\\\\n\" https://bitgeeks-journal-backend.onrender.com/health)",
+      "Bash(flutter build *)",
+      "Bash(curl -s -i -X OPTIONS \"https://bitgeeks-journal-backend.onrender.com/api/auth/login\" -H \"Origin: http://localhost:8080\" -H \"Access-Control-Request-Method: POST\" -H \"Access-Control-Request-Headers: content-type\")",
+      "Bash(curl -s -i -X OPTIONS \"https://bitgeeks-journal-backend.onrender.com/api/auth/login\" -H \"Origin: https://example.com\" -H \"Access-Control-Request-Method: POST\")"
     ]
   }
 }
