@@ -89,7 +89,9 @@ class _MobileShell extends StatelessWidget {
     final showFAB = location == '/trades';
 
     return Scaffold(
-      body: SafeArea(child: child),
+      body: SafeArea(
+          bottom: false,
+          child: child),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: onSelect,
