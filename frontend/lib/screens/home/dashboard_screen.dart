@@ -46,71 +46,113 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final trades = context.watch<TradesProvider>();
     final insights = context.watch<InsightsProvider>();
 
+    final twoColumn = context.isDesktop;
+    final pad = responsive(context, mobile: 16.0, tablet: 24.0, desktop: 40.0);
+
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView(
-        padding: EdgeInsets.symmetric(
-          horizontal: responsive(context, mobile: 16.0, tablet: 24.0, desktop: 32.0),
-          vertical: 24,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: pad, vertical: 24),
         children: [
           _greeting(context, auth),
           const SizedBox(height: 24),
-          _statsGrid(context, analytics),
-          const SizedBox(height: 32),
-          SectionHeader(
-            title: 'Recent trades',
-            subtitle: trades.total > 0 ? '${trades.total} total trades logged' : null,
-            action: TextButton.icon(
-              onPressed: () => context.go('/trades'),
-              icon: const Icon(Icons.arrow_forward, size: 16),
-              label: const Text('View all'),
-            ),
-          ),
-          if (trades.loading && trades.trades.isEmpty)
-            const SizedBox(height: 80, child: LoadingView())
-          else if (trades.trades.isEmpty)
-            _emptyTrades(context)
-          else
-            Column(
+          if (twoColumn)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final trade in trades.trades.take(5)) ...[
-                  TradeCard(
-                    trade: trade,
-                    onTap: () => context.go('/trades/${trade.id}'),
+                Expanded(
+                  flex: 7,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _statsGrid(context, analytics),
+                      const SizedBox(height: 28),
+                      _recentTradesSection(context, trades),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                ],
+                ),
+                const SizedBox(width: 28),
+                Expanded(
+                  flex: 4,
+                  child: _insightsSection(context, insights),
+                ),
               ],
-            ),
-          const SizedBox(height: 32),
-          SectionHeader(
-            title: 'Latest insights',
-            subtitle: insights.items.isEmpty ? 'No insights yet — generate them once you have 5+ trades' : null,
-            action: insights.items.isNotEmpty
-                ? TextButton.icon(
-                    onPressed: () => context.go('/insights'),
-                    icon: const Icon(Icons.arrow_forward, size: 16),
-                    label: const Text('View all'),
-                  )
-                : null,
-          ),
-          if (insights.loading && insights.items.isEmpty)
-            const SizedBox(height: 80, child: LoadingView())
-          else if (insights.items.isEmpty)
-            _emptyInsights(context)
-          else
-            Column(
-              children: [
-                for (final insight in insights.items.take(3)) ...[
-                  InsightCard(insight: insight),
-                  const SizedBox(height: 10),
-                ],
-              ],
-            ),
+            )
+          else ...[
+            _statsGrid(context, analytics),
+            const SizedBox(height: 32),
+            _recentTradesSection(context, trades),
+            const SizedBox(height: 32),
+            _insightsSection(context, insights),
+          ],
           const SizedBox(height: 60),
         ],
       ),
+    );
+  }
+
+  Widget _recentTradesSection(BuildContext context, TradesProvider trades) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(
+          title: 'Recent trades',
+          subtitle: trades.total > 0 ? '${trades.total} total trades logged' : null,
+          action: TextButton.icon(
+            onPressed: () => context.go('/trades'),
+            icon: const Icon(Icons.arrow_forward, size: 16),
+            label: const Text('View all'),
+          ),
+        ),
+        if (trades.loading && trades.trades.isEmpty)
+          const SizedBox(height: 80, child: LoadingView())
+        else if (trades.trades.isEmpty)
+          _emptyTrades(context)
+        else
+          Column(
+            children: [
+              for (final trade in trades.trades.take(5)) ...[
+                TradeCard(
+                  trade: trade,
+                  onTap: () => context.go('/trades/${trade.id}'),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _insightsSection(BuildContext context, InsightsProvider insights) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(
+          title: 'Latest insights',
+          subtitle: insights.items.isEmpty ? 'No insights yet — generate them once you have 5+ trades' : null,
+          action: insights.items.isNotEmpty
+              ? TextButton.icon(
+                  onPressed: () => context.go('/insights'),
+                  icon: const Icon(Icons.arrow_forward, size: 16),
+                  label: const Text('View all'),
+                )
+              : null,
+        ),
+        if (insights.loading && insights.items.isEmpty)
+          const SizedBox(height: 80, child: LoadingView())
+        else if (insights.items.isEmpty)
+          _emptyInsights(context)
+        else
+          Column(
+            children: [
+              for (final insight in insights.items.take(3)) ...[
+                InsightCard(insight: insight),
+                const SizedBox(height: 10),
+              ],
+            ],
+          ),
+      ],
     );
   }
 
@@ -153,7 +195,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _statsGrid(BuildContext context, AnalyticsProvider a) {
     final s = a.summary;
-    final cols = responsive<int>(context, mobile: 2, tablet: 4, desktop: 4);
+    // Desktop uses a two-column body layout, so the stats grid lives in the
+    // narrower left column — 2x2 reads better there than 4x1.
+    final cols = responsive<int>(context, mobile: 2, tablet: 4, desktop: 2);
 
     Widget summaryCard({
       required String label,

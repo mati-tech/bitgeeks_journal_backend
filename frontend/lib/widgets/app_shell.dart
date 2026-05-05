@@ -291,7 +291,15 @@ class _RailShell extends StatelessWidget {
             ),
 
             // ── Main content ──
-            Expanded(child: child),
+            Expanded(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1440),
+                  child: child,
+                ),
+              ),
+            ),
           ],
         ),
       ),
