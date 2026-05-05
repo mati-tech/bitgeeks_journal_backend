@@ -40,25 +40,28 @@ class TradeCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          trade.symbol,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.3,
+                        Expanded(
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                trade.symbol,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              _typePill(trade.tradeType),
+                              if (trade.leverage > 1) _smallChip('${trade.leverage}x'),
+                              if (!trade.isClosed) _smallChip('OPEN', color: AppColors.warning),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _typePill(trade.tradeType),
-                        if (trade.leverage > 1) ...[
-                          const SizedBox(width: 6),
-                          _smallChip('${trade.leverage}x'),
-                        ],
-                        if (!trade.isClosed) ...[
-                          const SizedBox(width: 6),
-                          _smallChip('OPEN', color: AppColors.warning),
-                        ],
-                        const Spacer(),
                         PnlPill(value: trade.pnl, percentage: trade.pnlPercentage),
                       ],
                     ),

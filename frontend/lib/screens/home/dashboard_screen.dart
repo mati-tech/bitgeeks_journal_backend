@@ -193,14 +193,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: cols,
-      crossAxisSpacing: 14,
-      mainAxisSpacing: 14,
+    final tileHeight = responsive<double>(context, mobile: 138, tablet: 130, desktop: 130);
+    return GridView.builder(
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
-      childAspectRatio: cols == 2 ? 1.4 : 1.6,
-      children: children,
+      itemCount: children.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: cols,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 14,
+        mainAxisExtent: tileHeight,
+      ),
+      itemBuilder: (_, i) => children[i],
     );
   }
 
