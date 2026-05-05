@@ -193,14 +193,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: cols,
-      crossAxisSpacing: 14,
-      mainAxisSpacing: 14,
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      childAspectRatio: cols == 2 ? 1.4 : 1.6,
-      children: children,
+    // return GridView.count(
+    //     //   crossAxisCount: cols,
+    //     //   crossAxisSpacing: 14,
+    //     //   mainAxisSpacing: 14,
+    //     //   physics: const NeverScrollableScrollPhysics(),
+    //     //   shrinkWrap: true,
+    //     //   childAspectRatio: cols == 2 ? 1.4 : 1.6,
+    //     //   children: children,
+    //     // );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisSpacing = 14.0;
+        final mainAxisSpacing = 14.0;
+        final cardWidth = (constraints.maxWidth - (cols - 1) * crossAxisSpacing) / cols;
+        // aspectRatio = width / height → height = width / aspectRatio
+        final cardHeight = cardWidth / 1.4;
+        final rows = (children.length / cols).ceil();
+        final totalHeight = rows * cardHeight + (rows - 1) * mainAxisSpacing;
+
+        return SizedBox(
+          height: totalHeight,
+          child: GridView.count(
+            crossAxisCount: cols,
+            crossAxisSpacing: crossAxisSpacing,
+            mainAxisSpacing: mainAxisSpacing,
+            childAspectRatio: 1.4,
+            children: children,
+          ),
+        );
+      },
     );
   }
 
