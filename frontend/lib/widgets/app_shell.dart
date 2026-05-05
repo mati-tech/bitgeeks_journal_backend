@@ -143,7 +143,11 @@ class _RailShell extends StatelessWidget {
         child: Row(
           children: [
             // ── Left rail ──
+            // Explicit width is required: a child below uses
+            // minimumSize: Size(double.infinity, 44) when extended, which
+            // demands a bounded parent width or layout silently breaks on web.
             Container(
+              width: extended ? 240 : 80,
               decoration: const BoxDecoration(
                 color: AppColors.surface,
                 border: Border(right: BorderSide(color: AppColors.subtleBorder)),
