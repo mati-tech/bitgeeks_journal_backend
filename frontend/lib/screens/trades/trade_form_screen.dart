@@ -77,20 +77,19 @@ class _TradeFormScreenState extends State<TradeFormScreen> {
     setState(() => _loading = true);
     try {
       final list = context.read<TradesProvider>().trades;
-      Trade? t;
-      try {
-        t = list.firstWhere((tr) => tr.id == widget.tradeId);
-      } catch (_) {
-        t = null;
-      }
+      // FIX: Use firstWhere with orElse to avoid try/catch for control flow
+      Trade? t = list.cast<Trade?>().firstWhere(
+            (tr) => tr?.id == widget.tradeId,
+        orElse: () => null,
+      );
+
       // Fall back to list reload if trade not in cache.
       if (t == null) {
         await context.read<TradesProvider>().load();
-        try {
-          t = context.read<TradesProvider>().trades.firstWhere((tr) => tr.id == widget.tradeId);
-        } catch (_) {
-          t = null;
-        }
+        t = context.read<TradesProvider>().trades.cast<Trade?>().firstWhere(
+              (tr) => tr?.id == widget.tradeId,
+          orElse: () => null,
+        );
       }
       if (t != null) {
         _symbol.text = t.symbol;
@@ -148,6 +147,12 @@ class _TradeFormScreenState extends State<TradeFormScreen> {
     );
     if (time == null) return null;
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+  }
+
+  // FIX: Added missing parseNumOrNull helper
+  double? parseNumOrNull(String s) {
+    if (s.trim().isEmpty) return null;
+    return double.tryParse(s.trim());
   }
 
   Future<void> _submit() async {
@@ -284,8 +289,9 @@ class _TradeFormScreenState extends State<TradeFormScreen> {
                   const SizedBox(height: 24),
                   _section('Context'),
                   _row([
+                    // FIX: Changed 'initialValue' to 'value'
                     DropdownButtonFormField<String?>(
-                      initialValue: _strategy,
+                      value: _strategy,
                       decoration: const InputDecoration(labelText: 'Strategy'),
                       items: [
                         const DropdownMenuItem(value: null, child: Text('—')),
@@ -294,8 +300,9 @@ class _TradeFormScreenState extends State<TradeFormScreen> {
                       ],
                       onChanged: (v) => setState(() => _strategy = v),
                     ),
+                    // FIX: Changed 'initialValue' to 'value'
                     DropdownButtonFormField<String?>(
-                      initialValue: _timeframe,
+                      value: _timeframe,
                       decoration: const InputDecoration(labelText: 'Timeframe'),
                       items: [
                         const DropdownMenuItem(value: null, child: Text('—')),
@@ -353,16 +360,16 @@ class _TradeFormScreenState extends State<TradeFormScreen> {
   }
 
   Widget _section(String t) => Padding(
-        padding: const EdgeInsets.only(bottom: 14),
-        child: Text(
-          t.toUpperCase(),
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: AppColors.textMuted,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 14),
+    child: Text(
+      t.toUpperCase(),
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: AppColors.textMuted,
+        letterSpacing: 1.2,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
 
   Widget _row(List<Widget> children) {
     if (context.isMobile) {

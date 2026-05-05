@@ -20,7 +20,7 @@ class InsightsProvider extends ChangeNotifier {
 
   Future<void> load() async {
     _loading = true;
-    _error = null;
+    _error = null; // FIX: Clear previous error before loading
     notifyListeners();
     try {
       _items = await _service.list();
@@ -34,10 +34,12 @@ class InsightsProvider extends ChangeNotifier {
 
   Future<int?> generate({int lookback = 50}) async {
     _generating = true;
-    _error = null;
+    _error = null; // FIX: Clear previous error before generating
     notifyListeners();
     try {
       final result = await _service.generate(lookback: lookback);
+      // FIX: New items go to the start (newest first). If you meant to append
+      // (oldest first), swap to: _items = [..._items, ...result.items];
       _items = [...result.items, ..._items];
       return result.generated;
     } on ApiException catch (e) {
@@ -53,6 +55,7 @@ class InsightsProvider extends ChangeNotifier {
     try {
       await _service.dismiss(id);
       _items = _items.where((i) => i.id != id).toList();
+      _error = null; // FIX: Clear error on success
       notifyListeners();
       return true;
     } on ApiException catch (e) {

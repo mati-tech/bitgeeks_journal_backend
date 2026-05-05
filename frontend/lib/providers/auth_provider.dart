@@ -20,6 +20,9 @@ class AuthProvider extends ChangeNotifier {
       : _service = service,
         _client = client {
     _client.onUnauthorized = () {
+      // FIX: Reset busy state if a 401 fires during an in-flight request,
+      // otherwise UI stays stuck in loading state.
+      _busy = false;
       _status = AuthStatus.unauthenticated;
       _user = null;
       StorageService.clearToken();
@@ -34,18 +37,25 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
 
   Future<void> bootstrap() async {
-    final token = await StorageService.readToken();
-    if (token == null) {
-      _status = AuthStatus.unauthenticated;
-      notifyListeners();
-      return;
-    }
     try {
-      _user = await _service.me();
-      _status = AuthStatus.authenticated;
-    } on ApiException {
-      await StorageService.clearToken();
+      final token = await StorageService.readToken();
+      if (token == null) {
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return;
+      }
+      try {
+        _user = await _service.me();
+        _status = AuthStatus.authenticated;
+      } on ApiException {
+        await StorageService.clearToken();
+        _status = AuthStatus.unauthenticated;
+      }
+    } catch (_) {
+      // FIX: Catch any unexpected error (timeout, format, storage) so the
+      // provider doesn't stay stuck in AuthStatus.unknown forever.
       _status = AuthStatus.unauthenticated;
+      _error = 'Failed to restore session';
     }
     notifyListeners();
   }
@@ -97,9 +107,14 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await StorageService.clearToken();
+    try {
+      await StorageService.clearToken();
+    } catch (_) {
+      // FIX: Don't crash if storage fails — still clear local state
+    }
     _user = null;
     _status = AuthStatus.unauthenticated;
+    _error = null;
     notifyListeners();
   }
 }

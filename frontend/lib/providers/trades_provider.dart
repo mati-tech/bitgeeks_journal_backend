@@ -1,3 +1,5 @@
+import 'dart:typed_data'; // FIX: Added missing import for Uint8List
+
 import 'package:flutter/foundation.dart';
 
 import '../models/trade.dart';
@@ -38,6 +40,7 @@ class TradesProvider extends ChangeNotifier {
   }
 
   Future<Trade?> create(TradeInput input) async {
+    _error = null; // FIX: Clear previous error
     try {
       final trade = await _service.create(input);
       _trades = [trade, ..._trades];
@@ -52,6 +55,7 @@ class TradesProvider extends ChangeNotifier {
   }
 
   Future<Trade?> update(String id, TradeInput input) async {
+    _error = null; // FIX: Clear previous error
     try {
       final updated = await _service.update(id, input);
       _replace(updated);
@@ -64,10 +68,12 @@ class TradesProvider extends ChangeNotifier {
   }
 
   Future<bool> delete(String id) async {
+    _error = null; // FIX: Clear previous error
     try {
       await _service.delete(id);
       _trades = _trades.where((t) => t.id != id).toList();
-      _total = (_total - 1).clamp(0, 1 << 30);
+      // FIX: Use a reasonable clamp — if total was 0, don't go negative
+      _total = (_total - 1).clamp(0, _total);
       notifyListeners();
       return true;
     } on ApiException catch (e) {
@@ -78,11 +84,12 @@ class TradesProvider extends ChangeNotifier {
   }
 
   Future<Trade?> uploadScreenshot(
-    String id, {
-    required Uint8List bytes,
-    required String filename,
-    required String contentType,
-  }) async {
+      String id, {
+        required Uint8List bytes,
+        required String filename,
+        required String contentType,
+      }) async {
+    _error = null; // FIX: Clear previous error
     try {
       final updated = await _service.uploadScreenshot(
         tradeId: id,

@@ -11,8 +11,11 @@ enum TradeStatus { open, closed, cancelled }
 
 extension TradeStatusX on TradeStatus {
   String get apiValue => name;
-  String get label =>
-      switch (this) { TradeStatus.open => 'Open', TradeStatus.closed => 'Closed', TradeStatus.cancelled => 'Cancelled' };
+  String get label => switch (this) {
+    TradeStatus.open => 'Open',
+    TradeStatus.closed => 'Closed',
+    TradeStatus.cancelled => 'Cancelled',
+  };
   static TradeStatus fromApi(String s) {
     switch (s) {
       case 'closed':
@@ -93,28 +96,41 @@ class Trade {
       (emotions ?? '').split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
 
   factory Trade.fromJson(Map<String, dynamic> json) => Trade(
-        id: json['id'] as String,
-        userId: json['user_id'] as String,
-        symbol: json['symbol'] as String,
-        tradeType: TradeTypeX.fromApi(json['trade_type'] as String),
-        entryPrice: _toDouble(json['entry_price'])!,
-        exitPrice: _toDouble(json['exit_price']),
-        positionSize: _toDouble(json['position_size'])!,
-        leverage: (json['leverage'] as num?)?.toInt() ?? 1,
-        entryTime: DateTime.parse(json['entry_time'] as String),
-        exitTime: json['exit_time'] != null ? DateTime.parse(json['exit_time'] as String) : null,
-        pnl: _toDouble(json['pnl']),
-        pnlPercentage: _toDouble(json['pnl_percentage']),
-        fees: _toDouble(json['fees']) ?? 0,
-        strategy: json['strategy'] as String?,
-        timeframe: json['timeframe'] as String?,
-        notes: json['notes'] as String?,
-        emotions: json['emotions'] as String?,
-        screenshotUrl: json['screenshot_url'] as String?,
-        status: TradeStatusX.fromApi(json['status'] as String),
-        createdAt: DateTime.parse(json['created_at'] as String),
-        updatedAt: DateTime.parse(json['updated_at'] as String),
-      );
+    id: json['id'] as String? ?? '',
+    userId: json['user_id'] as String? ?? '',
+    symbol: json['symbol'] as String? ?? '',
+    tradeType: json['trade_type'] != null
+        ? TradeTypeX.fromApi(json['trade_type'] as String)
+        : TradeType.long,
+    // FIX: Removed force unwrap — now safe with defaults
+    entryPrice: _toDouble(json['entry_price']) ?? 0.0,
+    exitPrice: _toDouble(json['exit_price']),
+    positionSize: _toDouble(json['position_size']) ?? 0.0,
+    leverage: (json['leverage'] as num?)?.toInt() ?? 1,
+    entryTime: json['entry_time'] != null
+        ? DateTime.parse(json['entry_time'] as String)
+        : DateTime.now(),
+    exitTime: json['exit_time'] != null
+        ? DateTime.parse(json['exit_time'] as String)
+        : null,
+    pnl: _toDouble(json['pnl']),
+    pnlPercentage: _toDouble(json['pnl_percentage']),
+    fees: _toDouble(json['fees']) ?? 0.0,
+    strategy: json['strategy'] as String?,
+    timeframe: json['timeframe'] as String?,
+    notes: json['notes'] as String?,
+    emotions: json['emotions'] as String?,
+    screenshotUrl: json['screenshot_url'] as String?,
+    status: json['status'] != null
+        ? TradeStatusX.fromApi(json['status'] as String)
+        : TradeStatus.open,
+    createdAt: json['created_at'] != null
+        ? DateTime.parse(json['created_at'] as String)
+        : DateTime.now(),
+    updatedAt: json['updated_at'] != null
+        ? DateTime.parse(json['updated_at'] as String)
+        : DateTime.now(),
+  );
 }
 
 class TradeListResult {
@@ -131,13 +147,15 @@ class TradeListResult {
   });
 
   factory TradeListResult.fromJson(Map<String, dynamic> json) => TradeListResult(
-        items: (json['items'] as List)
-            .map((e) => Trade.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        total: json['total'] as int,
-        limit: json['limit'] as int,
-        offset: json['offset'] as int,
-      );
+    // FIX: Safe list handling
+    items: (json['items'] as List<dynamic>?)
+        ?.map((e) => Trade.fromJson(e as Map<String, dynamic>))
+        .toList() ??
+        [],
+    total: (json['total'] as num?)?.toInt() ?? 0,
+    limit: (json['limit'] as num?)?.toInt() ?? 0,
+    offset: (json['offset'] as num?)?.toInt() ?? 0,
+  );
 }
 
 /// Payload for create + update. Pass only the fields you want to send.
@@ -178,13 +196,16 @@ class TradeInput {
     final m = <String, dynamic>{};
     if (symbol != null) m['symbol'] = symbol;
     if (tradeType != null) m['trade_type'] = tradeType!.apiValue;
-    if (entryPrice != null) m['entry_price'] = entryPrice.toString();
-    if (exitPrice != null) m['exit_price'] = exitPrice.toString();
-    if (positionSize != null) m['position_size'] = positionSize.toString();
+    // FIX: Send numbers as numbers, not strings.
+    // If your backend truly expects strings, revert these.
+    if (entryPrice != null) m['entry_price'] = entryPrice;
+    if (exitPrice != null) m['exit_price'] = exitPrice;
+    if (positionSize != null) m['position_size'] = positionSize;
     if (leverage != null) m['leverage'] = leverage;
     if (entryTime != null) m['entry_time'] = entryTime!.toUtc().toIso8601String();
     if (exitTime != null) m['exit_time'] = exitTime!.toUtc().toIso8601String();
-    if (fees != null) m['fees'] = fees.toString();
+    // FIX: Same for fees — send as number
+    if (fees != null) m['fees'] = fees;
     if (strategy != null) m['strategy'] = strategy;
     if (timeframe != null) m['timeframe'] = timeframe;
     if (notes != null) m['notes'] = notes;

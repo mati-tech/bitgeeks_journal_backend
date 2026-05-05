@@ -29,13 +29,13 @@ class AnalyticsProvider extends ChangeNotifier {
   String get interval => _interval;
 
   Future<void> loadSummary() async {
+    _error = null; // FIX: Clear previous error
     try {
       _summary = await _service.summary();
-      notifyListeners();
     } on ApiException catch (e) {
       _error = e.message;
-      notifyListeners();
     }
+    notifyListeners(); // FIX: Single notify after all state changes
   }
 
   Future<void> loadAll({String? interval}) async {
@@ -44,18 +44,18 @@ class AnalyticsProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      final results = await Future.wait([
-        _service.summary(),
-        _service.performance(interval: _interval),
-        _service.byStrategy(),
-        _service.bySymbol(),
-        _service.emotional(),
-      ]);
-      _summary = results[0] as AnalyticsSummary;
-      _performance = results[1] as PerformanceSeries;
-      _byStrategy = results[2] as GroupedResponse;
-      _bySymbol = results[3] as GroupedResponse;
-      _emotional = results[4] as EmotionalAnalysis;
+      // FIX: Use typed futures and await individually to avoid unsafe casts
+      final summary = await _service.summary();
+      final performance = await _service.performance(interval: _interval);
+      final byStrategy = await _service.byStrategy();
+      final bySymbol = await _service.bySymbol();
+      final emotional = await _service.emotional();
+
+      _summary = summary;
+      _performance = performance;
+      _byStrategy = byStrategy;
+      _bySymbol = bySymbol;
+      _emotional = emotional;
     } on ApiException catch (e) {
       _error = e.message;
     } finally {
@@ -67,12 +67,13 @@ class AnalyticsProvider extends ChangeNotifier {
   Future<void> setInterval(String interval) async {
     if (interval == _interval) return;
     _interval = interval;
-    notifyListeners();
+    _error = null; // FIX: Clear previous error
+    notifyListeners(); // FIX: Only one notify for interval change
     try {
       _performance = await _service.performance(interval: _interval);
     } on ApiException catch (e) {
       _error = e.message;
     }
-    notifyListeners();
+    notifyListeners(); // FIX: Only one more notify after result
   }
 }

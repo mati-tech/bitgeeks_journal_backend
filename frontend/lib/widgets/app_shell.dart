@@ -68,6 +68,8 @@ class AppShell extends StatelessWidget {
   }
 }
 
+// ────────────────────────── MOBILE ──────────────────────────
+
 class _MobileShell extends StatelessWidget {
   final Widget child;
   final String location;
@@ -83,6 +85,9 @@ class _MobileShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Only show FAB on the exact trades list route
+    final showFAB = location == '/trades';
+
     return Scaffold(
       body: SafeArea(child: child),
       bottomNavigationBar: NavigationBar(
@@ -97,16 +102,18 @@ class _MobileShell extends StatelessWidget {
             ),
         ],
       ),
-      floatingActionButton: location.startsWith('/trades')
+      floatingActionButton: showFAB
           ? FloatingActionButton.extended(
-              onPressed: () => context.go('/trades/new'),
-              icon: const Icon(Icons.add),
-              label: const Text('New trade'),
-            )
+        onPressed: () => context.go('/trades/new'),
+        icon: const Icon(Icons.add),
+        label: const Text('New trade'),
+      )
           : null,
     );
   }
 }
+
+// ────────────────────────── TABLET / DESKTOP ──────────────────────────
 
 class _RailShell extends StatelessWidget {
   final Widget child;
@@ -126,147 +133,162 @@ class _RailShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final user = auth.user;
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: SafeArea(
         child: Row(
           children: [
+            // ── Left rail ──
             Container(
               decoration: const BoxDecoration(
                 color: AppColors.surface,
                 border: Border(right: BorderSide(color: AppColors.subtleBorder)),
               ),
               child: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: MediaQuery.sizeOf(context).height),
-                  child: IntrinsicHeight(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Logo
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: extended ? 24 : 18,
+                        vertical: 16,
+                      ),
+                      child: Row(
                         children: [
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: extended ? 24 : 18),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.accent,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.show_chart_rounded, color: Colors.white, size: 18),
-                                ),
-                                if (extended) ...[
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    'Trading\nJournal',
-                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                          height: 1.1,
-                                        ),
-                                  ),
-                                ],
-                              ],
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: AppColors.accent,
+                              borderRadius: BorderRadius.circular(10),
                             ),
+                            child: const Icon(Icons.show_chart_rounded,
+                                color: Colors.white, size: 18),
                           ),
-                          const SizedBox(height: 24),
-                          NavigationRail(
-                            extended: extended,
-                            selectedIndex: selectedIndex,
-                            backgroundColor: Colors.transparent,
-                            useIndicator: true,
-                            minWidth: 64,
-                            minExtendedWidth: 220,
-                            onDestinationSelected: onSelect,
-                            destinations: [
-                              for (final d in _destinations)
-                                NavigationRailDestination(
-                                  icon: Icon(d.icon),
-                                  selectedIcon: Icon(d.selectedIcon),
-                                  label: Text(d.label),
-                                ),
-                            ],
-                          ),
-                          const Spacer(),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                minimumSize: Size(extended ? double.infinity : 44, 44),
-                                padding: EdgeInsets.symmetric(horizontal: extended ? 16 : 8),
+                          if (extended) ...[
+                            const SizedBox(width: 12),
+                            Text(
+                              'Trading\nJournal',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                height: 1.1,
                               ),
-                              onPressed: () => context.go('/trades/new'),
-                              icon: const Icon(Icons.add, size: 18),
-                              label: extended ? const Text('New trade') : const SizedBox.shrink(),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          if (extended)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceHigh,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppColors.subtleBorder),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      auth.user?.fullName ?? auth.user?.email ?? 'You',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                    if (auth.user?.email != null) ...[
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        auth.user!.email,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                              color: AppColors.textMuted,
-                                            ),
-                                      ),
-                                    ],
-                                    const SizedBox(height: 8),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: OutlinedButton.icon(
-                                        onPressed: () async {
-                                          await context.read<AuthProvider>().logout();
-                                          if (context.mounted) context.go('/login');
-                                        },
-                                        icon: const Icon(Icons.logout, size: 16),
-                                        label: const Text('Sign out'),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          else
-                            IconButton(
-                              icon: const Icon(Icons.logout),
-                              tooltip: 'Sign out',
-                              onPressed: () async {
-                                await context.read<AuthProvider>().logout();
-                                if (context.mounted) context.go('/login');
-                              },
-                            ),
-                          const SizedBox(height: 16),
+                          ],
                         ],
                       ),
                     ),
-                  ),
+
+                    // Nav destinations
+                    NavigationRail(
+                      extended: extended,
+                      selectedIndex: selectedIndex,
+                      backgroundColor: Colors.transparent,
+                      useIndicator: true,
+                      minWidth: 64,
+                      minExtendedWidth: 220,
+                      onDestinationSelected: onSelect,
+                      destinations: [
+                        for (final d in _destinations)
+                          NavigationRailDestination(
+                            icon: Icon(d.icon),
+                            selectedIcon: Icon(d.selectedIcon),
+                            label: Text(d.label),
+                          ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // New trade button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          minimumSize: Size(extended ? double.infinity : 44, 44),
+                          padding: EdgeInsets.symmetric(horizontal: extended ? 16 : 8),
+                        ),
+                        onPressed: () => context.go('/trades/new'),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: extended
+                            ? const Text('New trade')
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // User card (extended) or logout icon (compact)
+                    if (extended)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceHigh,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.subtleBorder),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user?.fullName ?? user?.email ?? 'You',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (user?.email != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  user!.email,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () async {
+                                    await context.read<AuthProvider>().logout();
+                                    if (context.mounted) context.go('/login');
+                                  },
+                                  icon: const Icon(Icons.logout, size: 16),
+                                  label: const Text('Sign out'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Center(
+                        child: IconButton(
+                          icon: const Icon(Icons.logout),
+                          tooltip: 'Sign out',
+                          onPressed: () async {
+                            await context.read<AuthProvider>().logout();
+                            if (context.mounted) context.go('/login');
+                          },
+                        ),
+                      ),
+
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ),
             ),
+
+            // ── Main content ──
             Expanded(child: child),
           ],
         ),
